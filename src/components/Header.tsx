@@ -1,12 +1,9 @@
 import React from 'react';
 import {
-  RotateCcw,
-  Send,
   Sparkles,
   FileText,
   Trophy,
   BookOpen,
-  BookmarkCheck,
 } from 'lucide-react';
 import { ExamSet } from '../types/exam';
 
@@ -40,63 +37,44 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectExam,
   examMode,
   onToggleExamMode,
-  isStarted,
-  isSubmitted,
-  onSubmitExam,
-  onResetExam,
   onOpenImportWord,
   onOpenLeaderboard,
   leaderboardCount,
   onOpenLessonCatalog,
-  onOpenFormulaSheet,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-[#070f24]/95 backdrop-blur-md border-b border-sky-950 text-white shadow-lg no-print">
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-3 md:gap-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-3">
         {/* Zone 1: Brand Wordmark */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-950/60 border border-cyan-400/30">
             <span className="font-mono text-xs sm:text-base font-black">∑12</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-lg font-bold tracking-tight text-white whitespace-nowrap">
-              Toán 12
-            </span>
-          </div>
+          <span className="text-xs sm:text-lg font-bold tracking-tight text-white whitespace-nowrap">
+            Toán 12
+          </span>
         </div>
 
-        {/* Zone 2: Navigation & Quick Tools (Desktop) */}
+        {/* Zone 2: Minimalist Single-Source Navigation (Desktop) */}
         <nav className="hidden lg:flex items-center gap-2 text-xs font-medium text-slate-300">
-          {/* Mục Bài Học (SGK Toán 12 Tập 1 & Tập 2 - Kết nối tri thức) */}
+          {/* 1. Mục Bài Học (bên trong mỗi bài học có Lý thuyết & 2 Đề ôn) */}
           <button
             onClick={onOpenLessonCatalog}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/60 hover:bg-emerald-500/30 hover:text-white transition-all whitespace-nowrap font-bold shadow-xs"
-            title="Mở danh mục Bài học & Đề ôn theo từng bài SGK Toán 12"
+            title="Mở Bài Học SGK (Bên trong mỗi bài có Lý thuyết & 2 Đề ôn)"
           >
             <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
             <span>Bài Học</span>
           </button>
 
-          {/* Mục Lý Thuyết Công Thức */}
-          {onOpenFormulaSheet && (
-            <button
-              onClick={onOpenFormulaSheet}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-200 border border-cyan-400/60 hover:bg-cyan-500/30 hover:text-white transition-all whitespace-nowrap font-bold shadow-xs"
-              title="Lý thuyết & Công thức cần nhớ chuẩn 100% SGK Toán 12 (Bài 1 - Bài 19)"
-            >
-              <BookmarkCheck className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Lý Thuyết Công Thức</span>
-            </button>
-          )}
-
-          {/* Chọn Đề Thi */}
+          {/* 2. Chọn Đề Thi Tổng Hợp */}
           <div className="flex items-center gap-1.5 bg-[#0b1739] px-3 py-1.5 rounded-xl border border-sky-800/60 shadow-xs">
             <span className="text-sky-300 font-medium">Đề:</span>
             {allExams.length > 0 ? (
               <select
                 value={currentExam.id}
                 onChange={(e) => onSelectExam(e.target.value)}
-                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer pr-1 max-w-[210px] truncate"
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer pr-1 max-w-[200px] truncate"
               >
                 {allExams.map((ex) => (
                   <option key={ex.id} value={ex.id} className="bg-[#071126] text-white">
@@ -109,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Tạo Đề Từ File Word / PDF */}
+          {/* 3. Tạo Đề Từ File Word / PDF */}
           <button
             onClick={onOpenImportWord}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/20 hover:text-white transition-all whitespace-nowrap font-bold"
@@ -119,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Tạo Đề Word / PDF</span>
           </button>
 
-          {/* Bảng Xếp Hạng */}
+          {/* 4. Bảng Xếp Hạng */}
           <button
             onClick={onOpenLeaderboard}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/50 hover:bg-amber-500/25 hover:text-white transition-all whitespace-nowrap font-bold shadow-xs"
@@ -132,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          {/* Chế độ thi / Luyện tập */}
+          {/* 5. Chế độ thi / Luyện tập */}
           <button
             onClick={onToggleExamMode}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all whitespace-nowrap font-bold ${
@@ -147,87 +125,51 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Primary Action & Mobile Controls */}
-        <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 min-w-0">
-          {/* Quick tools on small screens */}
-          <div className="flex lg:hidden items-center gap-1 min-w-0">
-            <button
-              onClick={onOpenLessonCatalog}
-              className="min-h-[38px] px-2 sm:px-2.5 py-1.5 flex items-center gap-1 rounded-xl bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 hover:bg-emerald-500/30 text-xs font-bold whitespace-nowrap shrink-0"
-              title="Bài Học & Đề Ôn SGK"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Bài Học</span>
-            </button>
+        {/* Zone 3: Mobile Compact Navigation */}
+        <div className="flex lg:hidden items-center gap-1 min-w-0">
+          <button
+            onClick={onOpenLessonCatalog}
+            className="min-h-[36px] px-2.5 py-1.5 flex items-center gap-1 rounded-xl bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 hover:bg-emerald-500/30 text-xs font-bold whitespace-nowrap shrink-0"
+            title="Bài Học (Lý thuyết & 2 Đề ôn)"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>Bài Học</span>
+          </button>
 
-            {onOpenFormulaSheet && (
-              <button
-                onClick={onOpenFormulaSheet}
-                className="min-h-[38px] px-2 sm:px-2.5 py-1.5 flex items-center gap-1 rounded-xl bg-cyan-500/20 border border-cyan-400/60 text-cyan-200 hover:bg-cyan-500/30 text-xs font-bold whitespace-nowrap shrink-0"
-                title="Lý Thuyết & Công Thức SGK"
+          {allExams.length > 0 && (
+            <div className="flex items-center gap-1 bg-[#0b1739] px-2 py-1.5 rounded-xl border border-sky-800/60 text-xs min-w-0">
+              <select
+                value={currentExam.id}
+                onChange={(e) => onSelectExam(e.target.value)}
+                aria-label="Chọn đề thi"
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer max-w-[115px] sm:max-w-[160px] truncate"
               >
-                <BookmarkCheck className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
-                <span className="hidden sm:inline">Lý Thuyết Công Thức</span>
-                <span className="sm:hidden">Lý Thuyết</span>
-              </button>
-            )}
+                {allExams.map((ex) => (
+                  <option key={ex.id} value={ex.id} className="bg-[#071126] text-white">
+                    {ex.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-            {allExams.length > 0 && (
-              <div className="flex items-center gap-1 bg-[#0b1739] px-2 py-1.5 rounded-xl border border-sky-800/60 text-xs min-w-0">
-                <select
-                  value={currentExam.id}
-                  onChange={(e) => onSelectExam(e.target.value)}
-                  aria-label="Chọn đề thi"
-                  className="bg-transparent text-white font-bold focus:outline-none cursor-pointer max-w-[115px] sm:max-w-[160px] truncate"
-                >
-                  {allExams.map((ex) => (
-                    <option key={ex.id} value={ex.id} className="bg-[#071126] text-white">
-                      {ex.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+          <button
+            onClick={onOpenImportWord}
+            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl bg-[#0b1739] border border-sky-800/60 text-cyan-300 hover:bg-sky-900/60 shrink-0"
+            title="Tạo đề từ Word / PDF"
+          >
+            <FileText className="w-4 h-4" />
+          </button>
 
-            <button
-              onClick={onOpenLeaderboard}
-              className="min-w-[38px] min-h-[38px] flex items-center justify-center rounded-xl bg-amber-500/15 border border-amber-400/50 text-amber-300 hover:bg-amber-500/25 shrink-0"
-              title="Bảng Xếp Hạng"
-            >
-              <Trophy className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={onOpenImportWord}
-              className="min-w-[38px] min-h-[38px] flex items-center justify-center rounded-xl bg-[#0b1739] border border-sky-800/60 text-cyan-300 hover:bg-sky-900/60 shrink-0"
-              title="Tạo đề từ Word / PDF"
-            >
-              <FileText className="w-4 h-4" />
-            </button>
-          </div>
-
-          {isSubmitted ? (
-            <button
-              onClick={onResetExam}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-[#0b1739] hover:bg-sky-900 border border-sky-800/80 rounded-xl transition-all whitespace-nowrap shadow-sm"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Làm Lại Đề</span>
-              <span className="sm:hidden">Làm lại</span>
-            </button>
-          ) : isStarted ? (
-            <button
-              onClick={onSubmitExam}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-md shadow-indigo-950/60 whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Nộp Bài Thi</span>
-            </button>
-          ) : null}
+          <button
+            onClick={onOpenLeaderboard}
+            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl bg-amber-500/15 border border-amber-400/50 text-amber-300 hover:bg-amber-500/25 shrink-0"
+            title="Bảng Xếp Hạng"
+          >
+            <Trophy className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>
   );
 };
-
-

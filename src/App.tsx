@@ -16,15 +16,12 @@ import { Part2TrueFalse } from './components/Part2TrueFalse';
 import { Part3ShortAnswer } from './components/Part3ShortAnswer';
 import { Part4StepOrdering } from './components/Part4StepOrdering';
 import { ResultReport } from './components/ResultReport';
-import { FormulaSheetModal } from './components/FormulaSheetModal';
-import { ScratchpadModal } from './components/ScratchpadModal';
 import { ImportWordModal } from './components/ImportWordModal';
 import { LessonCatalogModal } from './components/LessonCatalogModal';
 import {
   LeaderboardModal,
   INITIAL_LEADERBOARD_ENTRIES,
   sortLeaderboardEntries,
-  formatDuration,
 } from './components/LeaderboardModal';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { usePWAInstall } from './hooks/usePWAInstall';
@@ -42,8 +39,6 @@ import {
   ShieldCheck,
   Play,
   RotateCcw,
-  Trophy,
-  ChevronRight,
   User,
   UserCheck,
   Sparkles,
@@ -51,8 +46,8 @@ import {
   LayoutGrid,
   WifiOff,
   Smartphone,
-  Clock,
   BookOpen,
+  BookmarkCheck,
 } from 'lucide-react';
 
 const LEADERBOARD_STORAGE_KEY = 'math12_leaderboard_v8_clean';
@@ -181,11 +176,10 @@ export default function App() {
     return new Set();
   });
 
-  const [isFormulaOpen, setIsFormulaOpen] = useState(false);
-  const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
   const [isImportWordOpen, setIsImportWordOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isLessonCatalogOpen, setIsLessonCatalogOpen] = useState(false);
+  const [lessonCatalogTab, setLessonCatalogTab] = useState<'theory' | 'exams'>('exams');
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [isPWAInfoOpen, setIsPWAInfoOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -667,14 +661,20 @@ export default function App() {
     return sortLeaderboardEntries(leaderboardEntries);
   }, [leaderboardEntries]);
 
-  const topSidebarEntries = useMemo(() => {
-    return sortedAllEntries.slice(0, 5);
-  }, [sortedAllEntries]);
-
   const currentUserRankPosition = useMemo(() => {
     const idx = sortedAllEntries.findIndex((e) => e.isCurrentUser);
     return idx >= 0 ? idx + 1 : undefined;
   }, [sortedAllEntries]);
+
+  // Danh sách đề tổng hợp hiển thị ở mục "Đề:" (tách biệt với các đề ôn nằm trong mục Bài Học)
+  const generalExamsForHeader = useMemo(() => {
+    const lessonExamIds = new Set(ALL_LESSON_EXAMS.map((e) => e.id));
+    const generalOnly = allExams.filter((e) => !lessonExamIds.has(e.id));
+    if (activeLesson && !generalOnly.some((e) => e.id === currentExam.id)) {
+      return [currentExam, ...generalOnly];
+    }
+    return generalOnly;
+  }, [allExams, activeLesson, currentExam]);
 
   // Navigation scroll helper
   const handleNavigateQuestion = (part: ExamPart, index: number) => {
@@ -709,7 +709,7 @@ export default function App() {
       {/* Header */}
       <Header
         currentExam={currentExam}
-        allExams={allExams}
+        allExams={generalExamsForHeader}
         onSelectExam={handleSelectExam}
         examMode={examMode}
         onToggleExamMode={() => setExamMode((m) => (m === 'exam' ? 'practice' : 'exam'))}
@@ -718,12 +718,13 @@ export default function App() {
         isSubmitted={isSubmitted}
         onSubmitExam={() => setShowSubmitConfirm(true)}
         onResetExam={handleResetExam}
-        onOpenFormulaSheet={() => setIsFormulaOpen(true)}
-        onOpenScratchpad={() => setIsScratchpadOpen(true)}
         onOpenImportWord={() => setIsImportWordOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         leaderboardCount={leaderboardEntries.length}
-        onOpenLessonCatalog={() => setIsLessonCatalogOpen(true)}
+        onOpenLessonCatalog={() => {
+          setLessonCatalogTab('exams');
+          setIsLessonCatalogOpen(true);
+        }}
         fontSize={fontSize}
         onChangeFontSize={setFontSize}
         isOnline={isOnline}
@@ -741,25 +742,42 @@ export default function App() {
         </div>
       )}
 
-      {/* Sub-header Bar: Chỉ hiển thị thông tin học sinh (khi đã bắt đầu/nộp bài), Đồng hồ đếm ngược & Nút Bắt Đầu / Nộp Bài */}
-      <div className="bg-[#071126] border-b border-sky-950 shadow-md">
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Hiển thị nhanh thông tin Bài học & chuyển nhanh Đề ôn 1 / Đề ôn 2 nếu đang chọn Đề ôn bài học */}
+      {/* Sub-header Bar (Sticky): Thanh điều khiển tác vụ duy nhất (Bài học đang chọn [Lý thuyết | 2 Đề ôn], Đồng hồ & Bắt đầu / Nộp bài) */}
+      <div className="sticky top-[52px] sm:top-[60px] z-30 bg-[#071126]/95 backdrop-blur-md border-b border-sky-950 shadow-md no-print">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            {/* Hiển thị nhanh thông tin Bài học: Mục Lý thuyết & 2 Đề ôn */}
             {activeLesson && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => setIsLessonCatalogOpen(true)}
+                  onClick={() => {
+                    setLessonCatalogTab('exams');
+                    setIsLessonCatalogOpen(true);
+                  }}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/50 transition-colors"
-                  title="Nhấn để đổi Bài học khác"
+                  title="Nhấn để chọn Bài học khác"
                 >
                   <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="truncate max-w-[200px] sm:max-w-[320px]">
+                  <span className="truncate max-w-[160px] sm:max-w-[280px]">
                     {activeLesson.fullName}
                   </span>
                 </button>
+
                 <div className="inline-flex items-center gap-1 bg-[#0b1739] p-0.5 rounded-xl border border-sky-800/80">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLessonCatalogTab('theory');
+                      setIsLessonCatalogOpen(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-cyan-300 hover:bg-cyan-500/20 hover:text-white flex items-center gap-1 transition-all"
+                    title="Xem Lý thuyết & Công thức của bài học này"
+                  >
+                    <BookmarkCheck className="w-3 h-3 text-cyan-400" />
+                    <span>Lý thuyết</span>
+                  </button>
+
                   {activeLesson.practiceExams.map((ex, idx) => (
                     <button
                       key={ex.id}
@@ -844,8 +862,21 @@ export default function App() {
             )}
           </div>
 
-          {/* Exam Timer (chỉ xuất hiện khi học sinh đã chọn Bắt đầu làm bài) & Start / Submit Button */}
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
+          {/* Exam Timer (chỉ xuất hiện khi học sinh đã chọn Bắt đầu làm bài) & Single Primary Action Button */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 ml-auto shrink-0">
+            {/* Nút mở nhanh Phiếu trả lời trên điện thoại */}
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(true)}
+              className="lg:hidden px-2.5 py-1.5 rounded-xl bg-[#0b1739] hover:bg-sky-900 border border-sky-700/80 text-white flex items-center gap-1.5 text-xs font-bold"
+              title="Mở Phiếu Trả Lời"
+            >
+              <LayoutGrid className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="font-mono text-amber-300">
+                {totalAnswered}/{totalExamQuestions}
+              </span>
+            </button>
+
             {examMode === 'exam' && isExamStarted && !isSubmitted && (
               <Timer
                 initialMinutes={currentExam.durationMinutes}
@@ -856,32 +887,42 @@ export default function App() {
               />
             )}
 
-            {!isSubmitted &&
-              (!isExamStarted ? (
-                <button
-                  onClick={handleStartExam}
-                  className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs font-bold text-[#071126] bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 shadow-md shadow-emerald-950/60 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
-                >
-                  <Play className="w-3.5 h-3.5 fill-current shrink-0" />
-                  <span>Bắt Đầu Làm Bài</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowSubmitConfirm(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-950/60 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
-                >
-                  <Send className="w-3.5 h-3.5 shrink-0" />
-                  <span>
-                    Nộp Bài ({totalAnswered}/{totalExamQuestions})
-                  </span>
-                </button>
-              ))}
+            {isSubmitted ? (
+              <button
+                type="button"
+                onClick={handleResetExam}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#0b1739] hover:bg-sky-900 border border-sky-700 transition-all whitespace-nowrap shadow-sm"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Làm Lại Đề</span>
+              </button>
+            ) : !isExamStarted ? (
+              <button
+                type="button"
+                onClick={handleStartExam}
+                className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 rounded-xl text-xs font-bold text-[#071126] bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 shadow-md shadow-emerald-950/60 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              >
+                <Play className="w-3.5 h-3.5 fill-current shrink-0" />
+                <span>Bắt Đầu Làm Bài</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowSubmitConfirm(true)}
+                className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-950/60 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              >
+                <Send className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  Nộp Bài ({totalAnswered}/{totalExamQuestions})
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Main Content Layout: tối ưu khoảng cách lề trên điện thoại để khung câu hỏi to rõ vừa màn hình */}
-      <main className="max-w-7xl mx-auto px-2 sm:px-6 py-3 sm:py-6 pb-24 lg:pb-10 flex-1 w-full">
+      {/* Main Content Layout */}
+      <main className="max-w-7xl mx-auto px-2 sm:px-6 py-3 sm:py-6 pb-10 flex-1 w-full">
         {/* Results Report on Top if Submitted */}
         {isSubmitted && scoreDetail && (
           <div ref={resultReportRef} className="mb-8">
@@ -1095,55 +1136,10 @@ export default function App() {
                 </section>
               )}
 
-            {/* Bottom Submit Banner */}
-            {!isSubmitted && (
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-[#071126] via-[#0b1739] to-[#071126] border border-sky-900/60 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-                <div className="space-y-1 text-center sm:text-left">
-                  <h3 className="text-base font-bold text-white">
-                    {!isExamStarted
-                      ? 'Bạn đã sẵn sàng làm bài thi chưa?'
-                      : 'Bạn đã kiểm tra hết các câu hỏi chưa?'}
-                  </h3>
-                  <p className="text-xs text-sky-300">
-                    {!isExamStarted ? (
-                      `Thời gian làm bài: ${currentExam.durationMinutes} phút · Đề thi gồm ${totalExamQuestions} câu hỏi`
-                    ) : (
-                      <>
-                        Thí sinh:{' '}
-                        <strong className="text-white">{studentName.trim()}</strong> (Lớp{' '}
-                        <strong className="text-amber-300">{studentClass.trim()}</strong>) · Đã hoàn
-                        thành{' '}
-                        <strong className="text-cyan-300 font-mono text-sm">
-                          {totalAnswered}
-                        </strong>{' '}
-                        / {totalExamQuestions} câu hỏi.
-                      </>
-                    )}
-                  </p>
-                </div>
-                {!isExamStarted ? (
-                  <button
-                    onClick={handleStartExam}
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-[#071126] font-black text-sm shadow-md transition-all whitespace-nowrap active:scale-95 flex items-center gap-2"
-                  >
-                    <Play className="w-4 h-4 fill-current" />
-                    <span>Bắt Đầu Làm Bài</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setShowSubmitConfirm(true)}
-                    className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#071126] font-black text-sm shadow-md transition-all whitespace-nowrap active:scale-95 flex items-center gap-2"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Nộp Bài Ngay</span>
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Right Column: Sticky Question Bubble Navigator + Leaderboard Widget (3-4 Cols) */}
-          <div className="lg:col-span-4 xl:col-span-3 sticky top-20 space-y-4 no-print">
+          {/* Right Column: Sticky Question Bubble Navigator (3-4 Cols) */}
+          <div className="lg:col-span-4 xl:col-span-3 sticky top-28 space-y-4 no-print">
             <QuestionNav
               exam={currentExam}
               answers={answers}
@@ -1154,109 +1150,7 @@ export default function App() {
               isStarted={isExamStarted}
               isSubmitted={isSubmitted}
               interactedPart4={interactedPart4}
-              studentName={studentName}
-              studentClass={studentClass}
-              onEditStudentInfo={() => setIsStudentModalOpen(true)}
             />
-
-            {/* Bảng Xếp Hạng Sidebar Widget */}
-            <div className="bg-[#071126] rounded-2xl border border-sky-900/70 p-4 shadow-xl space-y-3">
-              <div className="flex items-center justify-between border-b border-sky-900/70 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300">
-                    <Trophy className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                      Bảng Xếp Hạng
-                    </h3>
-                    <p className="text-[11px] text-sky-300">Top 5 điểm cao nhất</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsLeaderboardOpen(true)}
-                  className="text-[11px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-0.5 transition-colors"
-                >
-                  <span>Chi tiết</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                {topSidebarEntries.length === 0 ? (
-                  <div className="py-5 px-3 rounded-xl bg-[#0b1739]/60 border border-sky-900/50 text-center text-xs text-sky-400">
-                    Chưa có học sinh nào trong bảng xếp hạng.
-                  </div>
-                ) : (
-                  topSidebarEntries.map((entry, idx) => {
-                    const rankNum = idx + 1;
-                    const rankBadge =
-                      rankNum === 1
-                        ? 'bg-amber-400 text-[#040817]'
-                        : rankNum === 2
-                        ? 'bg-slate-200 text-[#040817]'
-                        : rankNum === 3
-                        ? 'bg-orange-400 text-[#040817]'
-                        : 'bg-[#0b1739] text-sky-300 border border-sky-800';
-
-                    return (
-                      <div
-                        key={entry.id}
-                        className={`flex items-center justify-between gap-2 p-2 rounded-xl border transition-colors ${
-                          entry.isCurrentUser
-                            ? 'bg-cyan-500/15 border-cyan-500/40'
-                            : 'bg-[#0b1739]/90 border-sky-900/60 hover:border-sky-800'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span
-                            className={`w-6 h-6 rounded-lg font-mono text-xs font-black flex items-center justify-center shrink-0 ${rankBadge}`}
-                          >
-                            {rankNum}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-white truncate flex items-center gap-1">
-                              <span className="truncate">{entry.studentName}</span>
-                              {entry.isCurrentUser && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shrink-0">
-                                  Bạn
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-sky-300 truncate">
-                              Lớp {entry.className} ·{' '}
-                              {entry.examTitle.toLowerCase().startsWith('đề')
-                                ? entry.examTitle
-                                : `Đề ${entry.examTitle}`}{' '}
-                              · {formatDuration(entry.durationSeconds)}
-                              {entry.violationCount && entry.violationCount > 0 ? (
-                                <span className="text-rose-400 font-bold">
-                                  {' '}
-                                  · {entry.violationCount} vi phạm
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="font-mono text-xs font-black text-amber-300 tabular-nums">
-                            {entry.totalScore.toFixed(2)}đ
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              <button
-                onClick={() => setIsLeaderboardOpen(true)}
-                className="w-full py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span>Mở Bảng Xếp Hạng Đầy Đủ ({leaderboardEntries.length})</span>
-              </button>
-            </div>
           </div>
         </div>
       </main>
@@ -1631,17 +1525,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Formula Sheet Modal (Lý Thuyết & Công Thức SGK Toán 12) */}
-      <FormulaSheetModal
-        isOpen={isFormulaOpen}
-        onClose={() => setIsFormulaOpen(false)}
-        initialLessonId={activeLesson?.id}
-        onSelectExam={handleSelectExam}
-      />
-
-      {/* Scratchpad Whiteboard Modal */}
-      <ScratchpadModal isOpen={isScratchpadOpen} onClose={() => setIsScratchpadOpen(false)} />
-
       {/* Import Word Modal */}
       <ImportWordModal
         isOpen={isImportWordOpen}
@@ -1664,12 +1547,14 @@ export default function App() {
         onResetDefault={handleResetLeaderboardDefault}
       />
 
-      {/* Lesson Catalog Modal (Mục Bài Học & Đề Ôn SGK Toán 12 Tập 1) */}
+      {/* Lesson Catalog Modal (Mục Bài Học: bên trong mỗi bài có Lý thuyết & 2 Đề ôn) */}
       <LessonCatalogModal
         isOpen={isLessonCatalogOpen}
         onClose={() => setIsLessonCatalogOpen(false)}
         selectedExamId={selectedExamId}
         onSelectLessonExam={handleSelectExam}
+        initialLessonId={activeLesson?.id}
+        initialTab={lessonCatalogTab}
       />
 
       {/* PWA & Offline Info Modal */}
@@ -1684,7 +1569,7 @@ export default function App() {
         onPromptInstall={promptInstall}
       />
 
-      {/* Mobile Question Navigator Bottom Sheet (chỉ hiện khi bấm nút Phiếu Trả Lời trên điện thoại) */}
+      {/* Mobile Question Navigator Bottom Sheet (chỉ hiện khi bấm nút Phiếu TL trên điện thoại) */}
       {isMobileNavOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-black/75 backdrop-blur-sm animate-fadeIn no-print">
           <div
@@ -1697,13 +1582,13 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4 text-cyan-400" />
                 <span className="text-sm font-extrabold text-white">
-                  Chuyển Nhanh Câu Hỏi & Tiện Ích
+                  Phiếu Trả Lời & Tiện Ích
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMobileNavOpen(false)}
-                className="min-w-[40px] min-h-[40px] rounded-xl bg-[#0b1739] text-sky-300 hover:text-white border border-sky-800 flex items-center justify-center"
+                className="min-w-[36px] min-h-[36px] rounded-xl bg-[#0b1739] text-sky-300 hover:text-white border border-sky-800 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1714,7 +1599,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setExamMode((m) => (m === 'exam' ? 'practice' : 'exam'))}
-                className={`min-h-[42px] px-3 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 ${
+                className={`min-h-[40px] px-3 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 ${
                   examMode === 'exam'
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                     : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
@@ -1730,7 +1615,7 @@ export default function App() {
                   setIsMobileNavOpen(false);
                   setIsPWAInfoOpen(true);
                 }}
-                className="min-h-[42px] px-3 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 flex items-center justify-center gap-1.5"
+                className="min-h-[40px] px-3 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 flex items-center justify-center gap-1.5"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 <span>{isOnline ? 'Cài App Offline' : 'Đang Chạy Offline'}</span>
@@ -1750,87 +1635,13 @@ export default function App() {
               isStarted={isExamStarted}
               isSubmitted={isSubmitted}
               interactedPart4={interactedPart4}
-              studentName={studentName}
-              studentClass={studentClass}
-              onEditStudentInfo={() => {
-                setIsMobileNavOpen(false);
-                setIsStudentModalOpen(true);
-              }}
             />
           </div>
         </div>
       )}
 
-      {/* Thanh Điều Hướng Nhanh Cố Định Đáy Màn Hình Điện Thoại (lg:hidden) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#070f24]/95 backdrop-blur-md border-t border-sky-900/80 px-3 py-2 pb-safe shadow-2xl no-print">
-        <div className="max-w-lg mx-auto flex items-center justify-between gap-2">
-          {/* Nút Mở Phiếu Trả Lời Nhanh */}
-          <button
-            type="button"
-            onClick={() => setIsMobileNavOpen(true)}
-            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#0b1739] hover:bg-sky-900 border border-sky-700/80 text-white flex items-center gap-2 text-xs font-bold active:scale-95 transition-transform"
-          >
-            <LayoutGrid className="w-4 h-4 text-cyan-400 shrink-0" />
-            <span>
-              Phiếu TL:{' '}
-              <strong className="text-amber-300 font-mono">
-                {totalAnswered}/{totalExamQuestions}
-              </strong>
-            </span>
-          </button>
-
-          {/* Hiển thị thời gian đã làm / trạng thái ở giữa trên ĐT */}
-          {isExamStarted && !isSubmitted && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-sky-950/80 border border-sky-800/70 text-cyan-300 font-mono text-xs font-bold">
-              <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span>
-                {Math.floor(
-                  Math.max(0, currentExam.durationMinutes * 60 - timerElapsedSeconds) / 60
-                )
-                  .toString()
-                  .padStart(2, '0')}
-                :
-                {(Math.max(0, currentExam.durationMinutes * 60 - timerElapsedSeconds) % 60)
-                  .toString()
-                  .padStart(2, '0')}
-              </span>
-            </div>
-          )}
-
-          {/* Nút Hành Động Chính (Bắt Đầu / Nộp Bài / Làm Lại) */}
-          {isSubmitted ? (
-            <button
-              type="button"
-              onClick={handleResetExam}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-cyan-500 text-[#040817] font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Làm Lại</span>
-            </button>
-          ) : !isExamStarted ? (
-            <button
-              type="button"
-              onClick={handleStartExam}
-              className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-300 text-[#040817] font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md active:scale-95"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Bắt Đầu Làm Bài</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowSubmitConfirm(true)}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Nộp Bài</span>
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Footer */}
-      <footer className="mt-8 bg-[#030612] border-t border-sky-950 text-slate-400 py-6 pb-24 lg:pb-6 text-xs no-print">
+      <footer className="mt-8 bg-[#030612] border-t border-sky-950 text-slate-400 py-5 text-xs no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-bold text-white">GV Thanhbtx-mn</span>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { ExamSet, StudentAnswers, ExamPart } from '../types/exam';
-import { UserCheck } from 'lucide-react';
 
 interface QuestionNavProps {
   exam: ExamSet;
@@ -67,37 +66,6 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
 
   return (
     <div className="bg-[#071126] rounded-2xl border border-sky-900/60 shadow-xl p-4 space-y-4 text-white">
-      {/* Thí sinh info bar trên Phiếu trả lời (chỉ hiển thị sau khi bắt đầu làm bài) */}
-      {(isStarted || isSubmitted) && (
-        <div className="p-2.5 rounded-xl bg-[#0b1739] border border-sky-800/70 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shrink-0">
-              <UserCheck className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-bold text-white truncate">
-                {studentName && studentName.trim() ? studentName.trim() : 'Chưa điền họ tên'}
-              </div>
-              <div className="text-[11px] text-sky-300 truncate">
-                Lớp:{' '}
-                <span className="font-semibold text-amber-300">
-                  {studentClass && studentClass.trim() ? studentClass.trim() : '---'}
-                </span>
-              </div>
-            </div>
-          </div>
-          {onEditStudentInfo && (
-            <button
-              type="button"
-              onClick={onEditStudentInfo}
-              className="px-2 py-1 rounded-lg bg-[#071126] hover:bg-sky-900 text-cyan-300 border border-sky-800 text-[11px] font-semibold shrink-0 transition-colors"
-            >
-              {studentName && studentName.trim() ? 'Sửa' : 'Điền tên'}
-            </button>
-          )}
-        </div>
-      )}
-
       <div className="flex items-center justify-between pb-3 border-b border-sky-950/80">
         <div>
           <h3 className="text-sm font-bold text-white tracking-wide">Phiếu Trả Lời</h3>

@@ -1032,3 +1032,56 @@ export const THEORY_CATALOG: ChapterTheoryGroup[] = [
 ];
 
 export const ALL_THEORY_LESSONS: LessonTheory[] = THEORY_CATALOG.flatMap(chapter => chapter.lessons);
+
+export function getTheoryByLessonId(lessonId: string): LessonTheory | undefined {
+  const normalizedId = lessonId.replace(/^bai-0(\d)$/, 'bai-$1');
+  const direct = ALL_THEORY_LESSONS.find(l => l.lessonId === normalizedId);
+  if (direct) return direct;
+
+  const chapterMatch = lessonId.match(/^ontap-chuong-(\d)$/);
+  if (chapterMatch) {
+    const chNum = parseInt(chapterMatch[1], 10);
+    const chapter = THEORY_CATALOG.find(c => c.chapterId === `chuong-${chNum}`);
+    if (chapter) {
+      return {
+        lessonId,
+        lessonNumber: chNum,
+        title: `Tổng hợp Lý thuyết & Công thức - ${chapter.chapterTitle}`,
+        chapterId: chapter.chapterId,
+        chapterTitle: chapter.chapterTitle,
+        volume: chapter.volume,
+        pageNumber: chapter.lessons[0]?.pageNumber || 1,
+        keyConcepts: chapter.lessons.flatMap(l => l.keyConcepts),
+        examIds: [`ontap_c${chNum}_de1`, `ontap_c${chNum}_de2`],
+        sections: chapter.lessons.flatMap(l =>
+          l.sections.map(s => ({
+            ...s,
+            heading: `[${l.title.split('.')[0]}] ${s.heading}`
+          }))
+        )
+      };
+    }
+  }
+
+  if (lessonId === 'ontap-cuoi-nam') {
+    return {
+      lessonId,
+      lessonNumber: 20,
+      title: 'Tổng hợp Lý thuyết & Công thức Trọng tâm Toán 12 (Cả năm)',
+      chapterId: 'ontap-cuoi-nam',
+      chapterTitle: 'ÔN TẬP CUỐI NĂM TOÁN 12 (TẬP 1 & TẬP 2)',
+      volume: 2,
+      pageNumber: 81,
+      keyConcepts: ALL_THEORY_LESSONS.map(l => l.title),
+      examIds: ['ontap_cn_de1', 'ontap_cn_de2'],
+      sections: ALL_THEORY_LESSONS.map(l => ({
+        heading: l.title,
+        summary: l.chapterTitle,
+        boxes: l.sections.flatMap(s => s.boxes)
+      }))
+    };
+  }
+
+  return undefined;
+}
+
