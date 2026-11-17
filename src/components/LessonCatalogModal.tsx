@@ -68,7 +68,7 @@ export const LessonCatalogModal: React.FC<LessonCatalogModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-      <div className="bg-[#071126] rounded-2xl max-w-5xl w-full max-h-[92vh] flex flex-col border border-cyan-500/40 shadow-2xl text-white overflow-hidden">
+      <div className="bg-[#071126] rounded-2xl max-w-5xl w-full max-h-modal flex flex-col border border-cyan-500/40 shadow-2xl text-white overflow-hidden">
         {/* Header */}
         <div className="px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#071126] via-[#0b1c44] to-[#071126] border-b border-sky-900/80 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">

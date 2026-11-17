@@ -368,9 +368,19 @@ export default function App() {
       return;
     }
 
+    // Lưu kích thước khung hình chuẩn sau khi đóng bàn phím ảo (hỗ trợ chuẩn iPhone 10 -> iPhone 18)
+    let lastKeyboardTimestamp = Date.now();
     baselineViewportRef.current = {
       width: window.innerWidth,
-      height: window.innerHeight,
+      height: Math.max(window.innerHeight, window.visualViewport?.height || 0),
+    };
+
+    const handleFocusInOut = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        lastKeyboardTimestamp = Date.now();
+      }
     };
 
     const recordViolation = (
@@ -429,9 +439,14 @@ export default function App() {
     };
 
     const handleViewportResize = () => {
-      // Bỏ qua khi học sinh đang gõ bàn phím ảo vào ô trả lời ngắn hoặc biểu mẫu
+      // Bỏ qua khi học sinh đang gõ hoặc vừa đóng bàn phím ảo trên iPhone / Android (hiệu ứng trượt bàn phím iOS kéo dài ~500ms)
       const activeTag = document.activeElement?.tagName;
-      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
+      if (
+        activeTag === 'INPUT' ||
+        activeTag === 'TEXTAREA' ||
+        activeTag === 'SELECT' ||
+        Date.now() - lastKeyboardTimestamp < 1200
+      ) {
         return;
       }
 
@@ -441,11 +456,17 @@ export default function App() {
       const curW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
       const curH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
 
+      // Nếu thanh địa chỉ Safari trên iPhone thu gọn làm chiều cao tăng lên thì cập nhật lại mốc chuẩn
+      if (curW >= base.width && curH > base.height) {
+        baselineViewportRef.current = { width: curW, height: curH };
+        return;
+      }
+
       const widthRatio = curW / Math.max(1, base.width);
       const heightRatio = curH / Math.max(1, base.height);
 
       // Phát hiện chia đôi màn hình (split-screen) hoặc cửa sổ thu nhỏ / che một góc màn hình để dùng AI
-      if (widthRatio < 0.86 || heightRatio < 0.78) {
+      if (widthRatio < 0.85 || heightRatio < 0.72) {
         recordViolation(
           'screen_partial_cover',
           'Thu nhỏ khung hình, chia đôi màn hình hoặc mở cửa sổ ứng dụng/AI che một phần màn hình khi đang làm bài.'
@@ -453,6 +474,8 @@ export default function App() {
       }
     };
 
+    document.addEventListener('focusin', handleFocusInOut);
+    document.addEventListener('focusout', handleFocusInOut);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('pagehide', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
@@ -462,6 +485,8 @@ export default function App() {
     }
 
     return () => {
+      document.removeEventListener('focusin', handleFocusInOut);
+      document.removeEventListener('focusout', handleFocusInOut);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pagehide', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
@@ -705,7 +730,7 @@ export default function App() {
   }, [answers, currentExam, interactedPart4, isSubmitted]);
 
   return (
-    <div className="min-h-screen bg-[#040817] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
+    <div className="min-h-dvh bg-[#040817] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       {/* Header */}
       <Header
         currentExam={currentExam}
@@ -1641,13 +1666,22 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="mt-8 bg-[#030612] border-t border-sky-950 text-slate-400 py-5 text-xs no-print">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="mt-8 bg-[#030612] border-t border-sky-950 text-slate-400 py-5 pb-safe text-xs no-print">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-bold text-white">GV Thanhbtx-mn</span>
+            <span>•</span>
+            <span>Tối ưu iPhone 10 – iPhone 18 & Android</span>
           </div>
-          <div className="text-sky-300/80 text-center sm:text-right">
-            Hệ thống luyện thi & Đánh giá năng lực Toán học trực tuyến (Hỗ trợ Offline Mọi Điện Thoại)
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <button
+              type="button"
+              onClick={() => setIsPWAInfoOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-bold transition-colors"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>{isOnline ? 'Cài App Offline (Không cần Wi-Fi)' : 'Đang Chạy Chế Độ Không Wi-Fi'}</span>
+            </button>
           </div>
         </div>
       </footer>

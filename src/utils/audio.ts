@@ -15,8 +15,13 @@ function getAudioContext(): AudioContext | null {
       audioCtx = new AudioContextClass();
     }
   }
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume();
+  if (
+    audioCtx &&
+    (audioCtx.state === 'suspended' || (audioCtx.state as string) === 'interrupted')
+  ) {
+    audioCtx.resume().catch(() => {
+      // ignore iOS gesture restriction until next tap
+    });
   }
   return audioCtx;
 }
@@ -26,7 +31,9 @@ let timedExamAudioActive = false;
 
 export function setTimedExamAudioActive(active: boolean): void {
   timedExamAudioActive = active;
-  if (!active && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  if (active) {
+    getAudioContext();
+  } else if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
 }

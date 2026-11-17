@@ -146,47 +146,75 @@ export const Part3ShortAnswer: React.FC<Part3ShortAnswerProps> = ({
 
             {/* Answer Input Area (Khung nhập đáp số nền xanh sẫm với chữ lớn) */}
             <div className="rounded-2xl border border-sky-900/60 bg-[#071026] p-3.5 sm:p-6 shadow-2xl space-y-4">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
-                <div className="relative flex-1 sm:max-w-md">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    disabled={isSubmitted}
-                    value={userVal}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleCheckAnswer(q);
-                      }
-                    }}
-                    onChange={(e) => {
-                      playClickSound();
-                      onAnswerChange(q.id, e.target.value);
-                      if (checkedStatus[q.id] !== undefined) {
-                        setCheckedStatus((prev) => {
-                          const next = { ...prev };
-                          delete next[q.id];
-                          return next;
-                        });
-                      }
-                    }}
-                    placeholder="Nhập kết quả số (VD: -3, 2.5)..."
-                    className={`w-full min-h-[52px] px-4 sm:px-5 py-3 rounded-2xl border text-lg sm:text-2xl font-mono font-black tracking-wider transition-all focus:outline-none ${
-                      showSolution && userVal
-                        ? isCorrect
-                          ? 'bg-emerald-950/70 border-2 border-emerald-400 text-emerald-200'
-                          : 'bg-rose-950/70 border-2 border-rose-400 text-rose-200'
-                        : 'bg-[#0b1739] border-sky-700/60 text-white placeholder-sky-400/50 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30'
-                    }`}
-                  />
-                  {showSolution && userVal && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      {isCorrect ? (
-                        <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                      ) : (
-                        <XCircle className="w-6 h-6 text-rose-400" />
-                      )}
-                    </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 flex-wrap">
+                <div className="flex items-center gap-2 flex-1 sm:max-w-md">
+                  {/* Nút đổi dấu Âm/Dương (±) chuyên dụng cho bàn phím số iPhone (iOS decimal keypad không có phím dấu trừ) */}
+                  {!isSubmitted && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        const trimmed = userVal.trim();
+                        const nextVal = trimmed.startsWith('-')
+                          ? trimmed.slice(1)
+                          : `-${trimmed}`;
+                        onAnswerChange(q.id, nextVal);
+                        if (checkedStatus[q.id] !== undefined) {
+                          setCheckedStatus((prev) => {
+                            const next = { ...prev };
+                            delete next[q.id];
+                            return next;
+                          });
+                        }
+                      }}
+                      className="min-w-[52px] min-h-[52px] px-3 rounded-2xl bg-[#0b1739] hover:bg-sky-900 border border-sky-700/80 text-amber-300 font-mono font-black text-xl flex items-center justify-center shrink-0 active:scale-95 transition-all"
+                      title="Đổi dấu Âm / Dương (-) trên điện thoại iPhone"
+                    >
+                      ±
+                    </button>
                   )}
+
+                  <div className="relative flex-1 min-w-0">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      disabled={isSubmitted}
+                      value={userVal}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCheckAnswer(q);
+                        }
+                      }}
+                      onChange={(e) => {
+                        playClickSound();
+                        onAnswerChange(q.id, e.target.value);
+                        if (checkedStatus[q.id] !== undefined) {
+                          setCheckedStatus((prev) => {
+                            const next = { ...prev };
+                            delete next[q.id];
+                            return next;
+                          });
+                        }
+                      }}
+                      placeholder="Nhập đáp số (VD: -3, 2.5)..."
+                      className={`w-full min-h-[52px] px-4 sm:px-5 py-3 rounded-2xl border text-lg sm:text-2xl font-mono font-black tracking-wider transition-all focus:outline-none ${
+                        showSolution && userVal
+                          ? isCorrect
+                            ? 'bg-emerald-950/70 border-2 border-emerald-400 text-emerald-200'
+                            : 'bg-rose-950/70 border-2 border-rose-400 text-rose-200'
+                          : 'bg-[#0b1739] border-sky-700/60 text-white placeholder-sky-400/50 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30'
+                      }`}
+                    />
+                    {showSolution && userVal && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        {isCorrect ? (
+                          <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                        ) : (
+                          <XCircle className="w-6 h-6 text-rose-400" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Nút Kiểm Tra Đáp Số (kèm âm thanh đúng/sai) */}

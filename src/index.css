@@ -4,17 +4,35 @@
 @layer base {
   html,
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
     background-color: #040817;
     color: #f1f5f9;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 }
 
-/* Chuẩn font Times New Roman cho toàn bộ nội dung chữ trong câu hỏi Toán */
+/* Tối ưu riêng cho iOS Safari (iPhone X / 10 đến iPhone 18): chống tự động phóng to (auto-zoom) khi chạm vào ô nhập liệu hoặc menu chọn */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
+/* Chuẩn font Times New Roman cho toàn bộ nội dung chữ trong câu hỏi Toán (có sẵn mặc định Offline trên mọi iPhone & Android) */
 .font-times {
   font-family: 'Times New Roman', Times, Georgia, serif;
 }
@@ -48,9 +66,29 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Hỗ trợ tai thỏ / thanh điều hướng đáy màn hình điện thoại đời mới (iPhone 14/15/16, Android) */
+/* Hỗ trợ Tai thỏ (Notch), Dynamic Island & Thanh Home Indicator trên iPhone X (10) -> iPhone 18 và Android */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.5rem);
+}
+
+.px-safe {
+  padding-left: max(env(safe-area-inset-left, 0px), 0.5rem);
+  padding-right: max(env(safe-area-inset-right, 0px), 0.5rem);
+}
+
+/* Chiều cao linh hoạt chuẩn iOS Safari (100dvh) tránh bị thanh địa chỉ Safari che khuất */
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.max-h-modal {
+  max-height: 90vh;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1rem);
 }
 
 /* Ẩn thanh cuộn rườm rà trên các thanh tab ngang ở điện thoại */
@@ -74,4 +112,3 @@
     color: black !important;
   }
 }
-
