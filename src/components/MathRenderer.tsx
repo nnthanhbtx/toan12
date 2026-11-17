@@ -177,7 +177,7 @@ function preprocessRawMathContent(input: string): string {
 /**
  * Hiển thị bảng toán học (Bảng tần số ghép nhóm, Bảng giá trị, Bảng biến thiên trích từ Word/PDF)
  */
-const MathTableBlock: React.FC<{ rawTable: string }> = ({ rawTable }) => {
+const MathTableBlock: React.FC<{ rawTable: string }> = React.memo(({ rawTable }) => {
   const rows = rawTable
     .trim()
     .split(/\r?\n/)
@@ -220,9 +220,9 @@ const MathTableBlock: React.FC<{ rawTable: string }> = ({ rawTable }) => {
       </table>
     </span>
   );
-};
+});
 
-export const MathRenderer: React.FC<MathRendererProps> = ({
+export const MathRenderer: React.FC<MathRendererProps> = React.memo(({
   content,
   className = '',
 }) => {
@@ -388,4 +388,4 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       })}
     </span>
   );
-};
+});

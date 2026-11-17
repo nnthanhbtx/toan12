@@ -332,10 +332,11 @@ export default function App() {
     }
   }, [allExams]);
 
-  // Auto-save active exam progress to localStorage so offline refresh never loses answers
+  // Auto-save active exam progress to localStorage (debounced 150ms so touch interactions never lag on iPhone 10-18)
   useEffect(() => {
-    try {
-      if (!isSubmitted) {
+    if (isSubmitted) return;
+    const timer = window.setTimeout(() => {
+      try {
         localStorage.setItem(
           ACTIVE_PROGRESS_STORAGE_KEY,
           JSON.stringify({
@@ -347,10 +348,12 @@ export default function App() {
             violationLogs,
           })
         );
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
+    }, 150);
+
+    return () => window.clearTimeout(timer);
   }, [
     currentExam.id,
     isExamStarted,
@@ -539,12 +542,13 @@ export default function App() {
     setIsStudentModalOpen(true);
   };
 
-  // Helper when student interacts with a question directly before starting
+  // Khi học sinh chạm trực tiếp vào đáp án (A/B/C/D, Đúng/Sai...): tự động bắt đầu tính giờ và ghi nhận đáp án ngay lập tức để thao tác nhanh nhạy, không bị chặn bởi hộp thoại lỗi
   const ensureExamStarted = (): boolean => {
     if (isExamStarted) return true;
-    setStudentInfoError('Vui lòng điền Họ và tên và Lớp để bắt đầu làm bài!');
-    setIsStudentModalOpen(true);
-    return false;
+    examStartTimeRef.current = Date.now();
+    setTimedExamAudioActive(examMode === 'exam');
+    setIsExamStarted(true);
+    return true;
   };
 
   // Reset answers when changing exam
@@ -1217,9 +1221,11 @@ export default function App() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!studentName.trim() || !studentClass.trim()) {
-                  setStudentInfoError('Vui lòng nhập đầy đủ Họ và tên học sinh và Lớp!');
-                  return;
+                if (!studentName.trim()) {
+                  setStudentName('Học sinh Lớp 12');
+                }
+                if (!studentClass.trim()) {
+                  setStudentClass('12A1');
                 }
                 setStudentInfoError('');
                 setIsStudentModalOpen(false);
@@ -1233,24 +1239,23 @@ export default function App() {
             >
               <div>
                 <label className="block text-xs font-bold text-sky-200 mb-1.5">
-                  Họ và tên học sinh <span className="text-rose-400">*</span>
+                  Họ và tên học sinh
                 </label>
                 <input
                   type="text"
-                  autoFocus
                   value={studentName}
                   onChange={(e) => {
                     setStudentName(e.target.value);
                     if (studentInfoError) setStudentInfoError('');
                   }}
-                  placeholder="Nhập đầy đủ họ và tên (VD: Nguyễn Minh Quân)"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0b1739] border border-sky-700 text-sm font-semibold text-white placeholder-sky-400/50 focus:outline-none focus:border-cyan-400"
+                  placeholder="Nhập họ và tên (hoặc bấm Bắt đầu ngay)"
+                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-[#0b1739] border border-sky-700 text-sm font-semibold text-white placeholder-sky-400/50 focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-sky-200 mb-1.5">
-                  Lớp <span className="text-rose-400">*</span>
+                  Lớp
                 </label>
                 <input
                   type="text"
@@ -1260,10 +1265,10 @@ export default function App() {
                     if (studentInfoError) setStudentInfoError('');
                   }}
                   placeholder="Nhập lớp (VD: 12A1)"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0b1739] border border-sky-700 text-sm font-semibold text-amber-300 placeholder-sky-400/50 focus:outline-none focus:border-cyan-400"
+                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-[#0b1739] border border-sky-700 text-sm font-semibold text-amber-300 placeholder-sky-400/50 focus:outline-none focus:border-cyan-400"
                 />
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  <span className="text-[11px] text-sky-400">Chọn nhanh:</span>
+                  <span className="text-[11px] text-sky-400">Chọn nhanh 1 chạm:</span>
                   {QUICK_CLASSES.map((cls) => (
                     <button
                       key={cls}
@@ -1272,7 +1277,7 @@ export default function App() {
                         setStudentClass(cls);
                         if (studentInfoError) setStudentInfoError('');
                       }}
-                      className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-colors ${
+                      className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-colors ${
                         studentClass.trim().toUpperCase() === cls
                           ? 'bg-cyan-500 text-[#040817]'
                           : 'bg-[#0b1739] text-sky-300 border border-sky-800'
@@ -1298,18 +1303,18 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsStudentModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-sky-300 hover:bg-sky-950 transition-colors"
+                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold text-sky-300 hover:bg-sky-950 transition-colors"
                 >
                   Đóng
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-[#040817] bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 shadow-lg transition-all"
+                  className="min-h-[44px] flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-[#040817] bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 shadow-lg transition-all"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>
                     {!isExamStarted && !isSubmitted
-                      ? 'Xác Nhận & Bắt Đầu Làm Bài'
+                      ? 'Bắt Đầu Làm Bài Ngay'
                       : 'Lưu Thông Tin'}
                   </span>
                 </button>

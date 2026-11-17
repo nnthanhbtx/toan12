@@ -125,24 +125,25 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Mobile Compact Navigation */}
-        <div className="flex lg:hidden items-center gap-1 min-w-0">
+        {/* Zone 3: Mobile Compact Navigation (Chuẩn cảm ứng Apple HIG >= 40px cho iPhone 10 -> iPhone 18) */}
+        <div className="flex lg:hidden items-center gap-1.5 min-w-0">
           <button
+            type="button"
             onClick={onOpenLessonCatalog}
-            className="min-h-[36px] px-2.5 py-1.5 flex items-center gap-1 rounded-xl bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 hover:bg-emerald-500/30 text-xs font-bold whitespace-nowrap shrink-0"
+            className="min-h-[40px] px-3 py-1.5 flex items-center gap-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 active:bg-emerald-500/35 text-xs font-extrabold whitespace-nowrap shrink-0 select-none"
             title="Bài Học (Lý thuyết & 2 Đề ôn)"
           >
-            <BookOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>Bài Học</span>
           </button>
 
           {allExams.length > 0 && (
-            <div className="flex items-center gap-1 bg-[#0b1739] px-2 py-1.5 rounded-xl border border-sky-800/60 text-xs min-w-0">
+            <div className="min-h-[40px] flex items-center gap-1 bg-[#0b1739] px-2.5 py-1.5 rounded-xl border border-sky-800/60 text-xs min-w-0">
               <select
                 value={currentExam.id}
                 onChange={(e) => onSelectExam(e.target.value)}
                 aria-label="Chọn đề thi"
-                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer max-w-[115px] sm:max-w-[160px] truncate"
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer max-w-[118px] sm:max-w-[165px] truncate"
               >
                 {allExams.map((ex) => (
                   <option key={ex.id} value={ex.id} className="bg-[#071126] text-white">
@@ -154,16 +155,18 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           <button
+            type="button"
             onClick={onOpenImportWord}
-            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl bg-[#0b1739] border border-sky-800/60 text-cyan-300 hover:bg-sky-900/60 shrink-0"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-[#0b1739] border border-sky-800/60 text-cyan-300 active:bg-sky-900/80 shrink-0 select-none"
             title="Tạo đề từ Word / PDF"
           >
             <FileText className="w-4 h-4" />
           </button>
 
           <button
+            type="button"
             onClick={onOpenLeaderboard}
-            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl bg-amber-500/15 border border-amber-400/50 text-amber-300 hover:bg-amber-500/25 shrink-0"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-amber-500/15 border border-amber-400/50 text-amber-300 active:bg-amber-500/30 shrink-0 select-none"
             title="Bảng Xếp Hạng"
           >
             <Trophy className="w-4 h-4" />

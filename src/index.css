@@ -18,8 +18,22 @@
   a,
   input,
   select,
-  textarea {
+  textarea,
+  [role="button"] {
     touch-action: manipulation;
+  }
+
+  button,
+  [role="button"] {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    cursor: pointer;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:active {
+    transform: scale(0.98);
   }
 }
 
