@@ -24,6 +24,7 @@ interface Part3ShortAnswerProps {
   onToggleBookmark: (qId: string) => void;
   fontSize: 'normal' | 'large' | 'xlarge';
   totalQuestions?: number;
+  sessionKey?: number;
 }
 
 const checkIsCorrectAnswer = (q: ShortAnswerQuestion, val: string): boolean => {
@@ -53,6 +54,7 @@ interface Part3QuestionCardProps {
   onToggleBookmark: (qId: string) => void;
   onAnswerChange: (questionId: string, val: string) => void;
   promptTextSizeClass: string;
+  sessionKey?: number;
 }
 
 const Part3QuestionCard: React.FC<Part3QuestionCardProps> = React.memo(
@@ -67,8 +69,14 @@ const Part3QuestionCard: React.FC<Part3QuestionCardProps> = React.memo(
     onToggleBookmark,
     onAnswerChange,
     promptTextSizeClass,
+    sessionKey,
   }) => {
     const [hasChecked, setHasChecked] = useState<boolean>(false);
+
+    React.useEffect(() => {
+      setHasChecked(false);
+    }, [sessionKey]);
+
     const isCorrect = checkIsCorrectAnswer(q, userVal);
     const showSolution = isSubmitted || examMode === 'practice' || hasChecked;
 
@@ -86,7 +94,7 @@ const Part3QuestionCard: React.FC<Part3QuestionCardProps> = React.memo(
     };
 
     return (
-      <div id={`q-part3-${idx}`} className="space-y-3 scroll-mt-24">
+      <div id={`q-part3-${idx}`} className="space-y-3 scroll-mt-36 sm:scroll-mt-32">
         {/* Top Question Card */}
         <div className="rounded-2xl border border-sky-900/60 bg-[#071126] p-3.5 sm:p-6 md:p-7 shadow-2xl">
           <div className="flex items-center justify-between gap-2 pb-2.5 sm:pb-3 border-b border-sky-950/80 flex-wrap">
@@ -285,6 +293,7 @@ export const Part3ShortAnswer: React.FC<Part3ShortAnswerProps> = ({
   bookmarkedQuestions,
   onToggleBookmark,
   fontSize,
+  sessionKey,
 }) => {
   const promptTextSizeClass =
     fontSize === 'xlarge'
@@ -315,6 +324,7 @@ export const Part3ShortAnswer: React.FC<Part3ShortAnswerProps> = ({
           onToggleBookmark={onToggleBookmark}
           onAnswerChange={handleAnswerChange}
           promptTextSizeClass={promptTextSizeClass}
+          sessionKey={sessionKey}
         />
       ))}
     </div>

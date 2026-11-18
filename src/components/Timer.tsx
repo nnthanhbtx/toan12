@@ -19,11 +19,13 @@ export const Timer: React.FC<TimerProps> = ({
   const totalInitialSeconds = initialMinutes * 60;
   const [secondsLeft, setSecondsLeft] = useState(totalInitialSeconds);
   const [isPaused, setIsPaused] = useState(false);
+  const timeUpFiredRef = React.useRef(false);
 
   // Reset when initialMinutes or resetKey changes
   useEffect(() => {
     setSecondsLeft(initialMinutes * 60);
     setIsPaused(false);
+    timeUpFiredRef.current = false;
     if (onElapsedChange) {
       onElapsedChange(0);
     }
@@ -33,7 +35,10 @@ export const Timer: React.FC<TimerProps> = ({
     if (!isRunning || isPaused) return;
 
     if (secondsLeft <= 0) {
-      onTimeUp();
+      if (!timeUpFiredRef.current) {
+        timeUpFiredRef.current = true;
+        onTimeUp();
+      }
       return;
     }
 
@@ -42,11 +47,6 @@ export const Timer: React.FC<TimerProps> = ({
         const next = prev <= 1 ? 0 : prev - 1;
         if (onElapsedChange) {
           onElapsedChange(totalInitialSeconds - next);
-        }
-        if (prev <= 1) {
-          clearInterval(interval);
-          onTimeUp();
-          return 0;
         }
         return next;
       });

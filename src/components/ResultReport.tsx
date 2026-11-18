@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { PartScoreDetail } from '../types/exam';
 import confetti from 'canvas-confetti';
-import { Award, Printer, RotateCcw, ArrowDownCircle, Star, Trophy, User, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Award, Printer, RotateCcw, ArrowDownCircle, Star, Trophy, User, Clock, AlertTriangle, ShieldCheck, BookOpen, ArrowRight } from 'lucide-react';
 import { formatDuration } from './LeaderboardModal';
 
 interface ResultReportProps {
@@ -13,6 +13,12 @@ interface ResultReportProps {
   rankPosition?: number;
   totalRanked?: number;
   violationCount?: number;
+  part1Count?: number;
+  part3Count?: number;
+  activeLessonName?: string;
+  companionExamTitle?: string;
+  onOpenActiveTheory?: () => void;
+  onSwitchCompanionExam?: () => void;
   onOpenViolationModal?: () => void;
   onResetExam: () => void;
   onScrollToQuestions: () => void;
@@ -28,6 +34,12 @@ export const ResultReport: React.FC<ResultReportProps> = ({
   rankPosition,
   totalRanked,
   violationCount = 0,
+  part1Count = 12,
+  part3Count = 4,
+  activeLessonName,
+  companionExamTitle,
+  onOpenActiveTheory,
+  onSwitchCompanionExam,
   onOpenViolationModal,
   onResetExam,
   onScrollToQuestions,
@@ -196,10 +208,10 @@ export const ResultReport: React.FC<ResultReportProps> = ({
           <div className="text-xs font-bold text-cyan-300">Phần I: Trắc nghiệm 4 lựa chọn</div>
           <div className="text-2xl font-black font-mono text-white tabular-nums">
             {scoreDetail.part1Score}
-            <span className="text-sm text-sky-400 font-normal"> / 3.0đ</span>
+            <span className="text-sm text-sky-400 font-normal"> / {scoreDetail.part1Max}đ</span>
           </div>
           <div className="text-xs text-sky-300">
-            Đúng {scoreDetail.part1CorrectCount}/12 câu (0.25đ/câu)
+            Đúng {scoreDetail.part1CorrectCount}/{part1Count} câu (0.25đ/câu)
           </div>
         </div>
 
@@ -217,13 +229,13 @@ export const ResultReport: React.FC<ResultReportProps> = ({
 
         {/* Phần III */}
         <div className="p-4 rounded-2xl bg-[#0b1739] border border-sky-800/60 space-y-1.5 shadow-md">
-          <div className="text-xs font-bold text-cyan-300">Phần III: Trả lời ngắn (4 câu)</div>
+          <div className="text-xs font-bold text-cyan-300">Phần III: Trả lời ngắn ({part3Count} câu)</div>
           <div className="text-2xl font-black font-mono text-white tabular-nums">
             {scoreDetail.part3Score}
             <span className="text-sm text-sky-400 font-normal"> / {scoreDetail.part3Max}đ</span>
           </div>
           <div className="text-xs text-sky-300">
-            Đúng {scoreDetail.part3CorrectCount}/4 câu (0.5đ/câu)
+            Đúng {scoreDetail.part3CorrectCount}/{part3Count} câu (0.5đ/câu)
           </div>
         </div>
 
@@ -235,7 +247,7 @@ export const ResultReport: React.FC<ResultReportProps> = ({
             <span className="text-sm text-sky-400 font-normal"> / {scoreDetail.part4Max}đ</span>
           </div>
           <div className="text-xs text-sky-300">
-            Sắp xếp logic 4 bài tự luận
+            Sắp xếp logic {scoreDetail.part4Details.length} bài tự luận
           </div>
         </div>
       </div>
@@ -324,26 +336,50 @@ export const ResultReport: React.FC<ResultReportProps> = ({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
+            type="button"
             onClick={onScrollToQuestions}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#071126] font-bold text-xs transition-colors shadow-md"
+            className="min-h-[42px] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#071126] font-bold text-xs transition-colors shadow-md"
           >
             <ArrowDownCircle className="w-4 h-4" />
-            <span>Xem Lại Chi Tiết Từng Câu Hỏi & Lời Giải</span>
+            <span>Xem Lại Chi Tiết Câu Hỏi & Lời Giải</span>
           </button>
+          {activeLessonName && onOpenActiveTheory && (
+            <button
+              type="button"
+              onClick={onOpenActiveTheory}
+              className="min-h-[42px] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs border border-emerald-400/50 transition-colors"
+              title={`Ôn lại Lý thuyết & Công thức của ${activeLessonName}`}
+            >
+              <BookOpen className="w-4 h-4 text-emerald-400" />
+              <span>Ôn Lý Thuyết Bài Này</span>
+            </button>
+          )}
+          {companionExamTitle && onSwitchCompanionExam && (
+            <button
+              type="button"
+              onClick={onSwitchCompanionExam}
+              className="min-h-[42px] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 font-bold text-xs border border-indigo-400/50 transition-colors"
+            >
+              <span>Làm Tiếp {companionExamTitle}</span>
+              <ArrowRight className="w-4 h-4 text-indigo-300" />
+            </button>
+          )}
           {onOpenLeaderboard && (
             <button
+              type="button"
               onClick={onOpenLeaderboard}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-400/50 transition-colors shadow-sm"
+              className="min-h-[42px] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-400/50 transition-colors shadow-sm"
             >
               <Trophy className="w-4 h-4 text-amber-400" />
               <span>Xem Bảng Xếp Hạng</span>
             </button>
           )}
           <button
+            type="button"
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#0b1739] hover:bg-sky-900 text-sky-200 font-semibold text-xs border border-sky-800 transition-colors"
+            className="min-h-[42px] flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#0b1739] hover:bg-sky-900 text-sky-200 font-semibold text-xs border border-sky-800 transition-colors"
           >
             <Printer className="w-4 h-4 text-sky-400" />
             <span>In Phiếu Kết Quả</span>
@@ -351,8 +387,9 @@ export const ResultReport: React.FC<ResultReportProps> = ({
         </div>
 
         <button
+          type="button"
           onClick={onResetExam}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-900 hover:bg-sky-800 text-white font-bold text-xs transition-colors shadow-sm ml-auto border border-sky-700"
+          className="min-h-[42px] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-900 hover:bg-sky-800 text-white font-bold text-xs transition-colors shadow-sm ml-auto border border-sky-700"
         >
           <RotateCcw className="w-4 h-4" />
           <span>Làm Lại Bài Thi Này</span>

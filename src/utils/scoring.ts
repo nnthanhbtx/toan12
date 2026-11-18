@@ -9,7 +9,7 @@ export function calculateScore(exam: ExamSet, answers: StudentAnswers): PartScor
     }
   });
   const part1Score = Math.round(p1Correct * 0.25 * 100) / 100;
-  const part1Max = 3.0;
+  const part1Max = Math.round(exam.part1.length * 0.25 * 100) / 100 || 3.0;
 
   // 2. Chấm Phần II (4 câu - Chuẩn quy chế Bộ GD&ĐT 2025: 1 ý đúng = 0.1đ; 2 ý = 0.25đ; 3 ý = 0.5đ; 4 ý = 1.0đ)
   let part2Score = 0;

@@ -57,7 +57,7 @@ const Part1QuestionCard: React.FC<Part1QuestionCardProps> = React.memo(
     return (
       <div
         id={`q-part1-${idx}`}
-        className="space-y-3 scroll-mt-24"
+        className="space-y-3 scroll-mt-36 sm:scroll-mt-32"
       >
         {/* Top Question Card */}
         <div

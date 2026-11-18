@@ -591,6 +591,20 @@ export default function App() {
     return ALL_LESSONS.find((l) => l.practiceExams.some((ex) => ex.id === currentExam.id)) || null;
   }, [currentExam.id]);
 
+  // Đề ôn song hành trong cùng bài học (Đề ôn 1 <-> Đề ôn 2) để liên kết chuyển tiếp sau khi nộp bài
+  const companionLessonExam = useMemo(() => {
+    if (!activeLesson) return null;
+    const idx = activeLesson.practiceExams.findIndex((ex) => ex.id === currentExam.id);
+    if (idx < 0) return null;
+    const otherIdx = idx === 0 ? 1 : 0;
+    const otherExam = activeLesson.practiceExams[otherIdx];
+    if (!otherExam) return null;
+    return {
+      exam: otherExam,
+      label: `Đề ôn ${otherIdx + 1}`,
+    };
+  }, [activeLesson, currentExam.id]);
+
   // Áp dụng đề thi mới tạo từ file Word / PDF
   const handleApplyWordExam = (newExam: ExamSet) => {
     stopSpeech();
@@ -714,13 +728,13 @@ export default function App() {
     return generalOnly;
   }, [allExams, activeLesson, currentExam]);
 
-  // Navigation scroll helper
+  // Navigation scroll helper (dùng block: 'start' kết hợp scroll-mt trên từng câu để không bị che dưới header)
   const handleNavigateQuestion = (part: ExamPart, index: number) => {
     setActiveFilterPart('all');
     setTimeout(() => {
       const el = document.getElementById(`q-${part}-${index}`);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 50);
   };
@@ -903,11 +917,26 @@ export default function App() {
 
           {/* Exam Timer (chỉ xuất hiện khi học sinh đã chọn Bắt đầu làm bài) & Single Primary Action Button */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 ml-auto shrink-0">
+            {/* Nút chuyển nhanh Chế độ Thi / Luyện Tập 1 chạm trên điện thoại */}
+            <button
+              type="button"
+              onClick={() => setExamMode((m) => (m === 'exam' ? 'practice' : 'exam'))}
+              className={`lg:hidden min-h-[34px] px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 whitespace-nowrap transition-colors ${
+                examMode === 'exam'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+              }`}
+              title="Nhấn để chuyển giữa Chế độ Thi tính giờ và Chế độ Luyện tập"
+            >
+              <Sparkles className="w-3 h-3 shrink-0" />
+              <span>{examMode === 'exam' ? 'Thi' : 'Luyện tập'}</span>
+            </button>
+
             {/* Nút mở nhanh Phiếu trả lời trên điện thoại */}
             <button
               type="button"
               onClick={() => setIsMobileNavOpen(true)}
-              className="lg:hidden px-2.5 py-1.5 rounded-xl bg-[#0b1739] hover:bg-sky-900 border border-sky-700/80 text-white flex items-center gap-1.5 text-xs font-bold"
+              className="lg:hidden min-h-[34px] px-2.5 py-1.5 rounded-xl bg-[#0b1739] hover:bg-sky-900 border border-sky-700/80 text-white flex items-center gap-1.5 text-xs font-bold"
               title="Mở Phiếu Trả Lời"
             >
               <LayoutGrid className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
@@ -976,6 +1005,23 @@ export default function App() {
                 rankPosition={currentUserRankPosition}
                 totalRanked={leaderboardEntries.length}
                 violationCount={violationLogs.length}
+                part1Count={currentExam.part1.length}
+                part3Count={currentExam.part3.length}
+                activeLessonName={activeLesson?.fullName}
+                companionExamTitle={companionLessonExam?.label}
+                onOpenActiveTheory={
+                  activeLesson
+                    ? () => {
+                        setLessonCatalogTab('theory');
+                        setIsLessonCatalogOpen(true);
+                      }
+                    : undefined
+                }
+                onSwitchCompanionExam={
+                  companionLessonExam
+                    ? () => handleSelectExam(companionLessonExam.exam.id)
+                    : undefined
+                }
                 onOpenViolationModal={() => setIsViolationLogModalOpen(true)}
                 onResetExam={handleResetExam}
                 onScrollToQuestions={() => {
@@ -1144,6 +1190,7 @@ export default function App() {
                   onToggleBookmark={toggleBookmark}
                   fontSize={fontSize}
                   totalQuestions={totalExamQuestions}
+                  sessionKey={examSessionKey}
                 />
               </section>
             )}
@@ -1174,6 +1221,7 @@ export default function App() {
                     onToggleBookmark={toggleBookmark}
                     fontSize={fontSize}
                     totalQuestions={totalExamQuestions}
+                    sessionKey={examSessionKey}
                   />
                 </section>
               )}

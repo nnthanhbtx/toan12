@@ -138,7 +138,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
       studentName: newName.trim(),
       className: newClass.trim() || '12A1',
       examId: newExamId,
-      examTitle: examObj ? examObj.title : '02',
+      examTitle: examObj ? examObj.title : 'Đề ôn GK1 01',
       totalScore: total,
       part1Score: p1,
       part2Score: p2,
@@ -271,7 +271,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   >
                     {allExams.map((ex) => (
                       <option key={ex.id} value={ex.id} className="bg-[#071126]">
-                        Đề: {ex.title}
+                        {ex.title.toLowerCase().startsWith('đề') ? ex.title : `Đề ${ex.title}`}
                       </option>
                     ))}
                   </select>
@@ -495,31 +495,45 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                 <span>Lọc theo đề:</span>
               </div>
               <button
+                type="button"
                 onClick={() => setExamFilter('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
                   examFilter === 'all'
                     ? 'bg-cyan-500 text-[#040817] shadow-sm'
                     : 'bg-[#071126] text-sky-300 hover:text-white border border-sky-800'
                 }`}
               >
-                Tất cả đề ({entries.length})
+                Tất cả ({entries.length})
               </button>
-              {allExams.map((ex) => {
-                const count = entries.filter((e) => e.examId === ex.id).length;
-                return (
-                  <button
-                    key={ex.id}
-                    onClick={() => setExamFilter(ex.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                      examFilter === ex.id
-                        ? 'bg-cyan-500 text-[#040817] shadow-sm'
-                        : 'bg-[#071126] text-sky-300 hover:text-white border border-sky-800'
-                    }`}
-                  >
-                    Đề {ex.title.length > 12 ? ex.title.slice(0, 12) + '…' : ex.title} ({count})
-                  </button>
-                );
-              })}
+              <button
+                type="button"
+                onClick={() => setExamFilter(selectedExamId)}
+                className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                  examFilter === selectedExamId
+                    ? 'bg-cyan-500 text-[#040817] shadow-sm'
+                    : 'bg-[#071126] text-sky-300 hover:text-white border border-sky-800'
+                }`}
+              >
+                Đề đang chọn ({entries.filter((e) => e.examId === selectedExamId).length})
+              </button>
+              <select
+                value={examFilter}
+                onChange={(e) => setExamFilter(e.target.value)}
+                aria-label="Lọc bảng xếp hạng theo đề thi"
+                className="min-h-[36px] px-3 py-1.5 rounded-xl bg-[#071126] border border-sky-800 text-xs font-bold text-sky-200 focus:outline-none focus:border-cyan-400 max-w-[230px]"
+              >
+                <option value="all" className="bg-[#071126]">
+                  -- Chọn đề cụ thể ({allExams.length} đề) --
+                </option>
+                {allExams.map((ex) => {
+                  const count = entries.filter((e) => e.examId === ex.id).length;
+                  return (
+                    <option key={ex.id} value={ex.id} className="bg-[#071126]">
+                      {ex.title} ({count})
+                    </option>
+                  );
+                })}
+              </select>
             </div>
 
             <div className="relative min-w-[220px]">

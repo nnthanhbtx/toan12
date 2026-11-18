@@ -27,6 +27,7 @@ interface Part4StepOrderingProps {
   onToggleBookmark: (qId: string) => void;
   fontSize: 'normal' | 'large' | 'xlarge';
   totalQuestions?: number;
+  sessionKey?: number;
 }
 
 const cleanRoleDescription = (desc?: string) => {
@@ -46,6 +47,7 @@ interface Part4QuestionCardProps {
   onOrderChange: (questionId: string, newOrderedStepIds: string[]) => void;
   promptTextSizeClass: string;
   stepTextSizeClass: string;
+  sessionKey?: number;
 }
 
 const Part4QuestionCard: React.FC<Part4QuestionCardProps> = React.memo(
@@ -61,11 +63,18 @@ const Part4QuestionCard: React.FC<Part4QuestionCardProps> = React.memo(
     onOrderChange,
     promptTextSizeClass,
     stepTextSizeClass,
+    sessionKey,
   }) => {
     const [showPreview, setShowPreview] = useState<boolean>(false);
     const [hasChecked, setHasChecked] = useState<boolean>(false);
     // Hỗ trợ thao tác 1 chạm đổi chỗ nhanh trên màn hình cảm ứng iPhone 10-18
     const [selectedStepIdx, setSelectedStepIdx] = useState<number | null>(null);
+
+    React.useEffect(() => {
+      setShowPreview(false);
+      setHasChecked(false);
+      setSelectedStepIdx(null);
+    }, [sessionKey]);
 
     const stepMap = new Map<string, SolutionStep>();
     q.steps.forEach((s) => stepMap.set(s.id, s));
@@ -127,7 +136,7 @@ const Part4QuestionCard: React.FC<Part4QuestionCardProps> = React.memo(
     };
 
     return (
-      <div id={`q-part4-${idx}`} className="space-y-3 scroll-mt-24">
+      <div id={`q-part4-${idx}`} className="space-y-3 scroll-mt-36 sm:scroll-mt-32">
         {/* Top Question Card */}
         <div className="rounded-2xl border border-sky-900/60 bg-[#071126] p-3.5 sm:p-6 md:p-7 shadow-2xl">
           <div className="flex items-center justify-between gap-2 pb-2.5 sm:pb-3 border-b border-sky-950/80 flex-wrap">
@@ -434,6 +443,7 @@ export const Part4StepOrdering: React.FC<Part4StepOrderingProps> = ({
   bookmarkedQuestions,
   onToggleBookmark,
   fontSize,
+  sessionKey,
 }) => {
   const promptTextSizeClass =
     fontSize === 'xlarge'
@@ -472,6 +482,7 @@ export const Part4StepOrdering: React.FC<Part4StepOrderingProps> = ({
           onOrderChange={handleOrderChange}
           promptTextSizeClass={promptTextSizeClass}
           stepTextSizeClass={stepTextSizeClass}
+          sessionKey={sessionKey}
         />
       ))}
     </div>

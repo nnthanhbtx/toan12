@@ -39,6 +39,7 @@ export const LessonCatalogModal: React.FC<LessonCatalogModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen && initialLessonId) {
+      setActiveChapterId('all');
       setExpandedLessonId(initialLessonId);
       if (initialTab) {
         setLessonTabMap((prev) => ({ ...prev, [initialLessonId]: initialTab }));
