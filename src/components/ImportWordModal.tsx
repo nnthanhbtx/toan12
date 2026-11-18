@@ -24,8 +24,6 @@ import {
   SAMPLE_WORD_CONTENT,
   autoFormatAndFixMathContent,
 } from '../utils/wordExamParser';
-import { extractWordDocxWithMath } from '../utils/docxMathExtractor';
-import { extractMathExamFromPdf } from '../utils/pdfExamExtractor';
 import {
   ExamSet,
   MultipleChoiceQuestion,
@@ -230,6 +228,7 @@ export const ImportWordModal: React.FC<ImportWordModalProps> = ({
       if (lowerName.endsWith('.docx')) {
         setLoadingMessage('Đang giải nén file Word (.docx), trích xuất công thức OMML, bảng & hình vẽ...');
         const arrayBuffer = await file.arrayBuffer();
+        const { extractWordDocxWithMath } = await import('../utils/docxMathExtractor');
         const extractedWithMath = await extractWordDocxWithMath(arrayBuffer);
         resetOverrides();
         setContent(extractedWithMath);
@@ -241,6 +240,7 @@ export const ImportWordModal: React.FC<ImportWordModalProps> = ({
             ? 'Đang nhận diện công thức Toán LaTeX, cắt hình vẽ & đáp án từ file PDF...'
             : 'Đang trích xuất nhanh văn bản, công thức và hình vẽ từ file PDF...'
         );
+        const { extractMathExamFromPdf } = await import('../utils/pdfExamExtractor');
         const { text: pdfText } = await extractMathExamFromPdf(file, pdfMode);
         resetOverrides();
         setContent(pdfText);

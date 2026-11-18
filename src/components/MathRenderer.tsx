@@ -77,7 +77,7 @@ function sanitizeLatexFormula(rawFormula: string): string {
     .replace(/⁴/g, '^{4}')
     .replace(/−/g, '-')
     .replace(/\\(max|min|lim|sup|inf)\s*(?!\\limits)_/g, '\\$1\\limits_')
-    .replace(/(?<!\\)\b(max|min|lim)\s*(?!\\limits)_/g, '\\$1\\limits_')
+    .replace(/(^|[^\\a-zA-Z])(max|min|lim)\s*(?!\\limits)_/g, '$1\\$2\\limits_')
     .replace(/(\d),(\d)/g, '$1{,}$2')
     .trim();
 

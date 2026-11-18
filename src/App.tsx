@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, Suspense, lazy } from 'react';
 import { examSets } from './data/examSets';
 import { ALL_LESSON_EXAMS, ALL_LESSONS } from './data/lessons';
 import { ExamSet, StudentAnswers, ExamPart, PartScoreDetail, LeaderboardEntry, ExamViolationLog } from './types/exam';
@@ -15,16 +15,25 @@ import { Part1MultipleChoice } from './components/Part1MultipleChoice';
 import { Part2TrueFalse } from './components/Part2TrueFalse';
 import { Part3ShortAnswer } from './components/Part3ShortAnswer';
 import { Part4StepOrdering } from './components/Part4StepOrdering';
-import { ResultReport } from './components/ResultReport';
-import { ImportWordModal } from './components/ImportWordModal';
-import { LessonCatalogModal } from './components/LessonCatalogModal';
 import {
   LeaderboardModal,
   INITIAL_LEADERBOARD_ENTRIES,
   sortLeaderboardEntries,
 } from './components/LeaderboardModal';
-import { PWAInstallModal } from './components/PWAInstallModal';
 import { usePWAInstall } from './hooks/usePWAInstall';
+
+const ResultReport = lazy(() =>
+  import('./components/ResultReport').then((m) => ({ default: m.ResultReport }))
+);
+const ImportWordModal = lazy(() =>
+  import('./components/ImportWordModal').then((m) => ({ default: m.ImportWordModal }))
+);
+const LessonCatalogModal = lazy(() =>
+  import('./components/LessonCatalogModal').then((m) => ({ default: m.LessonCatalogModal }))
+);
+const PWAInstallModal = lazy(() =>
+  import('./components/PWAInstallModal').then((m) => ({ default: m.PWAInstallModal }))
+);
 import {
   playSubmitFanfare,
   playCorrectSound,
@@ -735,45 +744,46 @@ export default function App() {
 
   return (
     <div className="min-h-dvh bg-[#040817] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
-      {/* Header */}
-      <Header
-        currentExam={currentExam}
-        allExams={generalExamsForHeader}
-        onSelectExam={handleSelectExam}
-        examMode={examMode}
-        onToggleExamMode={() => setExamMode((m) => (m === 'exam' ? 'practice' : 'exam'))}
-        isStarted={isExamStarted}
-        onStartExam={handleStartExam}
-        isSubmitted={isSubmitted}
-        onSubmitExam={() => setShowSubmitConfirm(true)}
-        onResetExam={handleResetExam}
-        onOpenImportWord={() => setIsImportWordOpen(true)}
-        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-        leaderboardCount={leaderboardEntries.length}
-        onOpenLessonCatalog={() => {
-          setLessonCatalogTab('exams');
-          setIsLessonCatalogOpen(true);
-        }}
-        fontSize={fontSize}
-        onChangeFontSize={setFontSize}
-        isOnline={isOnline}
-        onOpenPWAInfo={() => setIsPWAInfoOpen(true)}
-      />
+      {/* Unified Sticky Top Shell (pt-safe tránh tai thỏ iPhone X / XS Max, không bị chồng lấn 2 thanh sticky) */}
+      <div className="sticky top-0 z-40 pt-safe bg-[#070f24] shadow-lg no-print">
+        <Header
+          currentExam={currentExam}
+          allExams={generalExamsForHeader}
+          onSelectExam={handleSelectExam}
+          examMode={examMode}
+          onToggleExamMode={() => setExamMode((m) => (m === 'exam' ? 'practice' : 'exam'))}
+          isStarted={isExamStarted}
+          onStartExam={handleStartExam}
+          isSubmitted={isSubmitted}
+          onSubmitExam={() => setShowSubmitConfirm(true)}
+          onResetExam={handleResetExam}
+          onOpenImportWord={() => setIsImportWordOpen(true)}
+          onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+          leaderboardCount={leaderboardEntries.length}
+          onOpenLessonCatalog={() => {
+            setLessonCatalogTab('exams');
+            setIsLessonCatalogOpen(true);
+          }}
+          fontSize={fontSize}
+          onChangeFontSize={setFontSize}
+          isOnline={isOnline}
+          onOpenPWAInfo={() => setIsPWAInfoOpen(true)}
+        />
 
-      {/* Offline Banner Notification (hiển thị gọn gàng khi thiết bị tắt Wi-Fi / 4G) */}
-      {!isOnline && (
-        <div className="bg-amber-500/20 border-b border-amber-400/40 px-3 py-1.5 text-center text-xs text-amber-200 flex items-center justify-center gap-2 no-print">
-          <WifiOff className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-          <span>
-            <strong>Chế độ Không Wi-Fi (Offline):</strong> Toàn bộ câu hỏi, công thức Toán và đáp án
-            đang được lưu an toàn trực tiếp trên điện thoại.
-          </span>
-        </div>
-      )}
+        {/* Offline Banner Notification (hiển thị gọn gàng khi thiết bị tắt Wi-Fi / 4G) */}
+        {!isOnline && (
+          <div className="bg-amber-500/20 border-b border-amber-400/40 px-3 py-1.5 text-center text-xs text-amber-200 flex items-center justify-center gap-2 no-print">
+            <WifiOff className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span>
+              <strong>Chế độ Không Wi-Fi (Offline):</strong> Toàn bộ câu hỏi, công thức Toán và đáp án
+              đang được lưu an toàn trực tiếp trên điện thoại.
+            </span>
+          </div>
+        )}
 
-      {/* Sub-header Bar (Sticky): Thanh điều khiển tác vụ duy nhất (Bài học đang chọn [Lý thuyết | 2 Đề ôn], Đồng hồ & Bắt đầu / Nộp bài) */}
-      <div className="sticky top-[52px] sm:top-[60px] z-30 bg-[#071126]/95 backdrop-blur-md border-b border-sky-950 shadow-md no-print">
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
+        {/* Sub-header Bar: Thanh điều khiển tác vụ duy nhất */}
+        <div className="bg-[#071126] border-b border-sky-950 shadow-md no-print">
+          <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
             {/* Hiển thị nhanh thông tin Bài học: Mục Lý thuyết & 2 Đề ôn */}
             {activeLesson && (
@@ -949,28 +959,31 @@ export default function App() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Main Content Layout */}
       <main className="max-w-7xl mx-auto px-2 sm:px-6 py-3 sm:py-6 pb-10 flex-1 w-full">
         {/* Results Report on Top if Submitted */}
         {isSubmitted && scoreDetail && (
           <div ref={resultReportRef} className="mb-8">
-            <ResultReport
-              scoreDetail={scoreDetail}
-              examTitle={currentExam.title}
-              studentName={studentName}
-              studentClass={studentClass}
-              durationSeconds={submittedDurationSeconds}
-              rankPosition={currentUserRankPosition}
-              totalRanked={leaderboardEntries.length}
-              violationCount={violationLogs.length}
-              onOpenViolationModal={() => setIsViolationLogModalOpen(true)}
-              onResetExam={handleResetExam}
-              onScrollToQuestions={() => {
-                questionsContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-            />
+            <Suspense fallback={null}>
+              <ResultReport
+                scoreDetail={scoreDetail}
+                examTitle={currentExam.title}
+                studentName={studentName}
+                studentClass={studentClass}
+                durationSeconds={submittedDurationSeconds}
+                rankPosition={currentUserRankPosition}
+                totalRanked={leaderboardEntries.length}
+                violationCount={violationLogs.length}
+                onOpenViolationModal={() => setIsViolationLogModalOpen(true)}
+                onResetExam={handleResetExam}
+                onScrollToQuestions={() => {
+                  questionsContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -1556,12 +1569,16 @@ export default function App() {
       )}
 
       {/* Import Word Modal */}
-      <ImportWordModal
-        isOpen={isImportWordOpen}
-        onClose={() => setIsImportWordOpen(false)}
-        onApplyExam={handleApplyWordExam}
-        defaultTitle="Đề tự luyện"
-      />
+      {isImportWordOpen && (
+        <Suspense fallback={null}>
+          <ImportWordModal
+            isOpen={isImportWordOpen}
+            onClose={() => setIsImportWordOpen(false)}
+            onApplyExam={handleApplyWordExam}
+            defaultTitle="Đề tự luyện"
+          />
+        </Suspense>
+      )}
 
       {/* Leaderboard Modal */}
       <LeaderboardModal
@@ -1578,26 +1595,34 @@ export default function App() {
       />
 
       {/* Lesson Catalog Modal (Mục Bài Học: bên trong mỗi bài có Lý thuyết & 2 Đề ôn) */}
-      <LessonCatalogModal
-        isOpen={isLessonCatalogOpen}
-        onClose={() => setIsLessonCatalogOpen(false)}
-        selectedExamId={selectedExamId}
-        onSelectLessonExam={handleSelectExam}
-        initialLessonId={activeLesson?.id}
-        initialTab={lessonCatalogTab}
-      />
+      {isLessonCatalogOpen && (
+        <Suspense fallback={null}>
+          <LessonCatalogModal
+            isOpen={isLessonCatalogOpen}
+            onClose={() => setIsLessonCatalogOpen(false)}
+            selectedExamId={selectedExamId}
+            onSelectLessonExam={handleSelectExam}
+            initialLessonId={activeLesson?.id}
+            initialTab={lessonCatalogTab}
+          />
+        </Suspense>
+      )}
 
       {/* PWA & Offline Info Modal */}
-      <PWAInstallModal
-        isOpen={isPWAInfoOpen}
-        onClose={() => setIsPWAInfoOpen(false)}
-        isOnline={isOnline}
-        swReady={swReady}
-        isInstalled={isInstalled}
-        isIOS={isIOS}
-        hasNativePrompt={hasNativePrompt}
-        onPromptInstall={promptInstall}
-      />
+      {isPWAInfoOpen && (
+        <Suspense fallback={null}>
+          <PWAInstallModal
+            isOpen={isPWAInfoOpen}
+            onClose={() => setIsPWAInfoOpen(false)}
+            isOnline={isOnline}
+            swReady={swReady}
+            isInstalled={isInstalled}
+            isIOS={isIOS}
+            hasNativePrompt={hasNativePrompt}
+            onPromptInstall={promptInstall}
+          />
+        </Suspense>
+      )}
 
       {/* Mobile Question Navigator Bottom Sheet (chỉ hiện khi bấm nút Phiếu TL trên điện thoại) */}
       {isMobileNavOpen && (

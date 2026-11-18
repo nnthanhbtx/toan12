@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLessonCatalog,
 }) => {
   return (
-    <header className="sticky top-0 z-40 pt-safe bg-[#070f24]/95 backdrop-blur-md border-b border-sky-950 text-white shadow-lg no-print">
+    <header className="bg-[#070f24] border-b border-sky-950/90 text-white no-print">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-3">
         {/* Zone 1: Brand Wordmark */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">

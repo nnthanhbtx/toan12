@@ -530,7 +530,7 @@ function cleanConvertedLatex(latex: string): string {
   if (!s) return '';
 
   s = s
-    .replace(/(?<!\\)\b(sin|cos|tan|cot|ln|log|lim|max|min)\b/g, '\\$1')
+    .replace(/(^|[^\\a-zA-Z])(sin|cos|tan|cot|ln|log|lim|max|min)(?![a-zA-Z])/g, '$1\\$2')
     .replace(/\\(max|min|lim)_\{/g, '\\$1\\limits_{')
     .replace(/\\(sin|cos|tan|cot)\s*\^\s*\{?2\}?/g, '\\$1^2 ')
     .replace(/\s{2,}/g, ' ')
