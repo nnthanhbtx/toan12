@@ -9,8 +9,9 @@ interface MathRendererProps {
 }
 
 interface MathPart {
-  type: 'text' | 'inline-math' | 'block-math' | 'tikz' | 'image' | 'table';
+  type: 'text' | 'inline-math' | 'block-math' | 'tikz' | 'image' | 'table' | 'newline';
   value: string;
+  bold?: boolean;
 }
 
 const KATEX_MACROS: Record<string, string> = {
@@ -222,6 +223,92 @@ const MathTableBlock: React.FC<{ rawTable: string }> = React.memo(({ rawTable })
   );
 });
 
+/**
+ * Phân tách xuống dòng và định dạng **in đậm** an toàn ngay cả khi bọc qua công thức $...$
+ * (Không dùng regex lookbehind để tương thích 100% với iOS Safari cũ trên iPhone 8/X/XS Max)
+ */
+function applyInlineBold(rawParts: MathPart[]): MathPart[] {
+  const expanded: MathPart[] = [];
+  for (const part of rawParts) {
+    if (part.type === 'text') {
+      const lines = part.value.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].length > 0) {
+          expanded.push({ type: 'text', value: lines[i] });
+        }
+        if (i < lines.length - 1) {
+          expanded.push({ type: 'newline', value: '\n' });
+        }
+      }
+    } else {
+      expanded.push(part);
+    }
+  }
+
+  const result: MathPart[] = [];
+  const isBlockBoundary = (t: MathPart['type']) =>
+    t === 'newline' || t === 'block-math' || t === 'tikz' || t === 'image' || t === 'table';
+
+  const flushRun = (run: MathPart[]) => {
+    if (run.length === 0) return;
+
+    type RunToken =
+      | { kind: 'marker' }
+      | { kind: 'part'; part: MathPart };
+
+    const tokens: RunToken[] = [];
+    let markerCount = 0;
+
+    for (const item of run) {
+      if (item.type === 'text' && item.value.indexOf('**') !== -1) {
+        const pieces = item.value.split('**');
+        for (let i = 0; i < pieces.length; i++) {
+          if (pieces[i].length > 0) {
+            tokens.push({ kind: 'part', part: { type: 'text', value: pieces[i] } });
+          }
+          if (i < pieces.length - 1) {
+            tokens.push({ kind: 'marker' });
+            markerCount++;
+          }
+        }
+      } else {
+        tokens.push({ kind: 'part', part: item });
+      }
+    }
+
+    const usableMarkers = Math.floor(markerCount / 2) * 2;
+    let seenMarkers = 0;
+    let isBold = false;
+
+    for (const tok of tokens) {
+      if (tok.kind === 'marker') {
+        if (seenMarkers < usableMarkers) {
+          isBold = !isBold;
+          seenMarkers++;
+        } else {
+          result.push({ type: 'text', value: '**', bold: isBold });
+        }
+      } else {
+        result.push(isBold ? { ...tok.part, bold: true } : tok.part);
+      }
+    }
+  };
+
+  let currentRun: MathPart[] = [];
+  for (const item of expanded) {
+    if (isBlockBoundary(item.type)) {
+      flushRun(currentRun);
+      currentRun = [];
+      result.push(item);
+    } else {
+      currentRun.push(item);
+    }
+  }
+  flushRun(currentRun);
+
+  return result;
+}
+
 export const MathRenderer: React.FC<MathRendererProps> = React.memo(({
   content,
   className = '',
@@ -282,7 +369,7 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({
       });
     }
 
-    return parts;
+    return applyInlineBold(parts);
   }, [content]);
 
   return (
@@ -291,6 +378,10 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({
       style={{ fontFamily: "'Times New Roman', Times, Georgia, serif" }}
     >
       {renderedContent.map((part, index) => {
+        if (part.type === 'newline') {
+          return <br key={index} />;
+        }
+
         if (part.type === 'image') {
           return (
             <span
@@ -320,27 +411,12 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({
         }
 
         if (part.type === 'text') {
-          const lines = part.value.split('\n');
-          return (
-            <React.Fragment key={index}>
-              {lines.map((line, lineIdx) => {
-                const boldSegments = line.split(/(\*\*[^*]+\*\*)/g);
-                return (
-                  <React.Fragment key={lineIdx}>
-                    {boldSegments.map((seg, segIdx) =>
-                      seg.startsWith('**') && seg.endsWith('**') && seg.length > 4 ? (
-                        <strong key={segIdx} className="font-bold">
-                          {seg.slice(2, -2)}
-                        </strong>
-                      ) : (
-                        <React.Fragment key={segIdx}>{seg}</React.Fragment>
-                      )
-                    )}
-                    {lineIdx < lines.length - 1 && <br />}
-                  </React.Fragment>
-                );
-              })}
-            </React.Fragment>
+          return part.bold ? (
+            <strong key={index} className="font-bold">
+              {part.value}
+            </strong>
+          ) : (
+            <React.Fragment key={index}>{part.value}</React.Fragment>
           );
         }
 
@@ -371,7 +447,7 @@ export const MathRenderer: React.FC<MathRendererProps> = React.memo(({
           ) : (
             <span
               key={index}
-              className="inline-math mx-0.5 align-baseline max-w-full"
+              className={`inline-math mx-0.5 align-baseline max-w-full ${part.bold ? 'font-bold' : ''}`}
               dangerouslySetInnerHTML={{ __html: html }}
             />
           );
